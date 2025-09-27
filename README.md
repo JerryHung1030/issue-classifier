@@ -108,10 +108,11 @@ To conduct a definitive final evaluation, I created a "gold standard" test set b
 * **Note**: Accuracy is 66%, but the model predicts `Bug` for most cases, ignoring minority classes.
 
 #### Evaluation for `Priority`
-
 | Classification Report | Confusion Matrix |
 | :---: | :---: |
 | <img src="images/report_priority.png" alt="Priority Classification Report" width="450"> | <img src="images/confusion_matrix_priority.png" alt="Priority Confusion Matrix" width="450"> |
+
+* **Note**: The 58% accuracy is driven by the model defaulting to `Normal`, the majority class.
 
 ---
 
