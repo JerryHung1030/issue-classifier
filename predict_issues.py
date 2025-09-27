@@ -31,6 +31,8 @@ def load_data(file_path):
 # Use 5-Fold Cross-Validation to evaluate multiple models on different variables
 def train_evaluate_models(train_df):
     models = {
+        # random_state=42: Ensures reproducible results.
+        # max_iter=1000: Sets the maximum number of iterations for the solver to converge.
         'Logistic Regression': LogisticRegression(random_state=42, max_iter=1000),
         'Multinomial Naive Bayes': MultinomialNB(),
         'Linear SVC (SVM)': LinearSVC(random_state=42)
@@ -52,6 +54,11 @@ def train_evaluate_models(train_df):
             ])
 
             # Perform cross-validation and calculate mean and std of accuracy
+            # pipeline: The model to evaluate.
+            # X: The feature data.
+            # y: The target labels.
+            # cv=5: Use 5-fold cross-validation.
+            # scoring='accuracy': Evaluate performance using accuracy.
             scores = cross_val_score(pipeline, X, y, cv=5, scoring='accuracy')
             mean_score = np.mean(scores)
             std_score = np.std(scores)
@@ -60,6 +67,9 @@ def train_evaluate_models(train_df):
     print("\n#### Model Evaluation Complete")
 
 def train_final_models_and_predict(train_df, predict_df):
+    # stop_words='english': Removes common English stop words.
+    # min_df=2: Ignores words that appear in less than 2 documents.
+    # ngram_range=(1, 2): Considers both single words (unigrams) and word pairs (bigrams).
     tfidf_vectorizer = TfidfVectorizer(stop_words='english', min_df=2, ngram_range=(1, 2))
     X_train = tfidf_vectorizer.fit_transform(train_df['text'])
     X_predict = tfidf_vectorizer.transform(predict_df['text'])
@@ -70,9 +80,10 @@ def train_final_models_and_predict(train_df, predict_df):
         'Priority': train_df['Priority']
     }
 
-    # Based on previous evaluation results, define the best models
     best_models = {
         'project_name': LinearSVC(random_state=42),
+        # random_state=42: Ensures reproducible results.
+        # max_iter=1000: Sets the maximum number of iterations for the solver to converge.
         'Type': LogisticRegression(random_state=42, max_iter=1000),
         'Priority': LogisticRegression(random_state=42, max_iter=1000)
     }
@@ -108,8 +119,11 @@ def evaluate_predictions(predicted_df, labels_file_path):
         report = classification_report(eval_df[true_col], eval_df[pred_col], zero_division=0)
         print(report)
 
+        # eval_df[true_col]: The actual true labels.
+        # eval_df[pred_col]: The predicted labels.
         cm = confusion_matrix(eval_df[true_col], eval_df[pred_col], labels=eval_df[true_col].unique())
         plt.figure(figsize=(10, 7))
+        # annot=True: Displays the numbers in each cell.
         sns.heatmap(cm, annot=True, fmt='d', 
                     xticklabels=eval_df[true_col].unique(), 
                     yticklabels=eval_df[true_col].unique())
@@ -119,7 +133,6 @@ def evaluate_predictions(predicted_df, labels_file_path):
         plt.savefig(f'images/confusion_matrix_{target.lower()}.png', bbox_inches='tight')
         plt.close()
 
-# Main function to load data and evaluate models
 def main():
     DATA_FILE_PATH = 'data/dataset.json'
     MANUAL_LABELS_PATH = 'data/manual_labels_dataset.json'
