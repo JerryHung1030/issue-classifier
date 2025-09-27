@@ -1,63 +1,74 @@
 # Issue Classifier
 
-This repository contains the solution for the programming task.
+This repository contains my solution for the internship programming task.
 
-## I. Exploratory Data Analysis (EDA)
+## Getting Started
 
-Before building any models, I performed a thorough exploratory analysis on the first 50 issues (the training set) to understand the data`s structure, distributions, and content. This process ensures that all subsequent modeling decisions are data-driven.
+Follow these instructions to set up the environment and run the project.
 
-* **Testing the EDA Notebook**: Launch Jupyter Notebook with:
-  ```bash
-  jupyter notebook
-  ```
-  Open `EDA.ipynb` and run the cells sequentially.
+### Prerequisites
+* Python 3.12
+* Jupyter Notebook (for running the EDA)
 
-### 1. Data Snapshot
-
-A quick snapshot of the data reveals the fields we will be working with. The primary features for our model will be the `summary` and `description` text.
-
-![Data Snapshot](images/data_snapshot.png)
-
-### 2. Target Variable Distributions
-
-An analysis of the three target variables (`project_name`, `Type`, `Priority`) revealed clear class imbalances.
-
-![Target Variable Distributions](images/target_distributions.png)
-
-* **Note:** The `project_name` and `Priority` fields are heavily skewed. As the chart shows, `Unidentified Roe` is the most frequent project, and `Normal` is the dominant priority. This imbalance must be considered, as a naive model might simply over-predict the majority class. The `Type` field is also imbalanced, with `Bug` and `Task` being the most common types.
-
-### 3. Text Feature Characteristics
-
-The lengths of the text fields were analyzed to understand the data's complexity and information density.
-
-![Text Length Distribution](images/text_length_distribution.png)
-
-* **Note:** While `summary` lengths are relatively consistent (mostly between 60-100 characters), `description` lengths vary widely, with a great portion containing over 600 characters. This suggests that the description holds rich, detailed information that will be vital for the model to distinguish between different issue types and projects. This justifies combining both fields for feature extraction.
-
-### 4. Keyword and Content Analysis
-
-To understand the content itself, I generated word clouds. Comparing the overall keywords with those from the two most frequent projects (`Unidentified Roe` and `Fast Badger`) yielded powerful insights.
-
-![Word Cloud Comparison](images/wordcloud_comparison.png)
-
-* **Note:** The keyword analysis provides strong evidence that text content is a viable predictor. The "Overall" cloud shows common terms like `issue`, `problem`, and `details`. However, the project-specific clouds reveal distinct vocabularies. `Unidentified Roe` issues frequently mention UI/UX related terms like `icon`, `menu`, `color`, and `duplicate`, while `Fast Badger` issues are dominated by system-level terms like `plugin`, `system`, and `notification`. This clear separation in terminology gives confidence that a machine learning model can effectively learn and leverage these patterns.
+### Installation & Execution
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/JerryHung1030/issue-classifier.git
+    cd issue-classifier
+    ```
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  **Run the main script:**
+    To train the final models and generate the predictions, execute the main script.
+    ```bash
+    python3 predict_issues.py
+    ```
+    This will create the final deliverable `processed_issues.json` inside the `data/` directory and save evaluation artifacts (confusion matrices) in the `images/` directory.
 
 ---
 
-## II. Model Selection
+## My Methodology
 
-To select the most suitable algorithm for this task, I evaluated three baseline models for text classification. This process was performed using 5-fold cross-validation on the training set to ensure the performance estimates are stable and reliable.
+My approach follows a standard data science workflow:
+1.  **Exploratory Data Analysis (EDA):** First, I dissected the training data to understand its characteristics and uncover potential challenges.
+2.  **Model Selection & Cross-Validation:** I then used a cross-validation process to objectively compare baseline models and select the most suitable one for each prediction task.
+3.  **Final Evaluation:** Finally, I trained the chosen models on the full training set and evaluated their real-world performance against a manually labeled "gold standard" test set.
 
-### 1. Choice of Models
+---
 
-I chose the following three models to establish a baseline:
-* **Logistic Regression:** A linear model that serves as a strong baseline.
-* **Multinomial Naive Bayes:** A classic probabilistic model that is traditionally very effective for text classification.
-* **Linear SVC (SVM):** A model based on geometric principles, which has high performance on high-dimensional, sparse data like TF-IDF features.
+## 1. Exploratory Data Analysis (EDA)
 
-### 2. Cross-Validation Results
+*(This section summarizes the key findings from the `EDA.ipynb` notebook.)*
 
-The models were evaluated on their mean accuracy across the 5 folds. The results are summarized below:
+### Data Snapshot & Text Characteristics
+![Data Snapshot](images/data_snapshot.png)
+![Text Length Distribution](images/text_length_distribution.png)
+
+* **Note:** The data consists of short `summary` fields and widely varying `description` lengths. The longer descriptions likely contain crucial information, justifying the strategy of combining both fields for feature extraction.
+
+### Target Variable Distributions & Keyword Analysis
+![Target Variable Distributions](images/target_distributions.png)
+![Word Cloud Comparison](images/wordcloud_comparison.png)
+
+* **Note:** The analysis shows two critical points:
+    1.  All target variables suffer from **severe class imbalance**, especially `project_name` and `Priority`. This is the primary challenge for this task.
+    2.  Keyword analysis confirms that different projects use distinct terminology (ex: UI terms for `Unidentified Roe` vs. system terms for `Fast Badger`), proving that the text contains a strong predictive signal.
+
+---
+
+## 2. Model Selection & Cross-Validation
+
+To select the best algorithm, I evaluated three robust baseline models.
+
+### Cross-Validation Results
+The models were evaluated on their mean accuracy across 5 folds on the 50-sample training set.
 
 | Target         | Logistic Regression | Multinomial Naive Bayes | Linear SVC (SVM)        |
 | :------------- | :------------------ | :---------------------- | :---------------------- |
@@ -65,72 +76,52 @@ The models were evaluated on their mean accuracy across the 5 folds. The results
 | `Type`         | **0.600 (+/- 0.000)** | 0.600 (+/- 0.000)       | 0.600 (+/- 0.000)       |
 | `Priority`     | **0.760 (+/- 0.049)** | 0.760 (+/- 0.049)       | 0.760 (+/- 0.049)       |
 
-* **Run the Code**: Execute the script with: (Ensure that all dependencies are installed as listed in `requirements.txt`.)
-  ```bash
-  python3 predict_issues.py
-  ```
-
-### 3. Analysis and Decision
-
-* **Note**: The evaluation triggered a `UserWarning` means that all three target variables have classes with only one member. This confirms the severe class imbalance discovered during the EDA and explains the challenges in achieving high accuracy.
-
-* **For `project_name`**: The scores are low across the board, which is expected given the extreme class imbalance. However, **Linear SVC** shows a notably higher, although unstable, performance. It is selected as the best available option for this challenging target.
-
-* **For `Priority`**: Critically, the high accuracy of 76% is misleading. My Above EDA shows that the majority class (`Normal`) constitutes approximately 76% of the data. This score shows that the models are likely not learning complex patterns but are defaulting to predicting the majority class.
-
-* **Decision**: Based on these results, the following models are chosen for the final prediction task:
-    * **`project_name`**: **Linear SVC (SVM)**
-    * **`Type`**: **Logistic Regression** (chosen for its simplicity as all models performed identically)
-    * **`Priority`**: **Logistic Regression** (chosen for simplicity, while acknowledging its performance is baseline)
+### Decision
+* **Analysis:** The low scores for `project_name` and the misleadingly high scores for `Priority` (which matches the majority class prevalence of 76%) confirm that class imbalance is the dominant factor.
+* **Models Chosen:**
+    * `project_name`: **Linear SVC (SVM)** for its slightly better, albeit unstable, performance.
+    * `Type` & `Priority`: **Logistic Regression** for its simplicity, as all models performed identically by adopting a majority-class prediction strategy.
 
 ---
 
-## III. Final Evaluation Against My Label
+## 3. Final Evaluation Against Gold Standard
 
-After selecting the best-performing model for each target variable in the previous phase, the final step is to train these models on the entire training set and evaluate their performance on the unseen test set.
+To conduct a definitive final evaluation, I created a "gold standard" test set by manually labeling the 50 prediction issues.
 
-To facilitate a quantitative evaluation, I first created a "gold standard" test set by manually labeling the 50 issues designated for prediction.
+> **Note:** These labels are based on my own judgment and serve as a consistent benchmark for this project, not as an official ground truth.
 
-> **Note on Manual Labels:** It is important to state that these labels are based on my own logical judgment after a short-term analysis of the issue text. While this provides a consistent benchmark for this project, it serves as a subjective ground truth, not an official one. The manually labeled data can be found at `data/manual_labels_dataset.json`.
+#### Evaluation for `project_name`
+| Classification Report | Confusion Matrix |
+| :---: | :---: |
+| <img src="images/report_project_name.png" alt="Project Name Classification Report" width="450"> | <img src="images/confusion_matrix_project_name.png" alt="Project Name Confusion Matrix" width="450"> |
 
-### Running the Final Prediction & Evaluation
-
-The main script `predict_issues.py` encapsulates the final workflow. When executed, it performs the following steps:
-
-1.  Trains the best models selected in Section II on the full 50-sample training dataset.
-2.  Predicts the labels for the subsequent 50 issues.
-3.  Saves the final, filled dataset as required by the task deliverables to `data/processed_dataset.json`.
-4.  Compares the predictions against the `data/manual_labels_dataset.json` file to generate the detailed evaluation reports and confusion matrices below.
-
-* **Run the Code**: Execute the script with: (Ensure that all dependencies are installed as listed in `requirements.txt`.)
-  ```bash
-  python3 predict_issues.py
-  ```
-
-### Evaluation Results
-
-### 1. Evaluation for `project_name`
-<div style="display: flex; justify-content: space-between;">
-  <img src="images/report_project_name.png" alt="Project Name Classification Report" style="width: auto; max-width: 48%; height: auto;">
-  <img src="images/confusion_matrix_project_name.png" alt="Project Name Confusion Matrix" style="width: 48%; height: auto;">
-</div>
 
 * **Note**: Accuracy is low (28%) due to class imbalance. The model over-predicts `Unidentified Roe,` the majority class.
 
-### 2. Evaluation for `Type`
-<div style="display: flex; justify-content: space-between;">
-  <img src="images/report_type.png" alt="Type Classification Report" style="width: auto; max-width: 48%; height: auto;">
-  <img src="images/confusion_matrix_type.png" alt="Type Confusion Matrix" style="width: 48%; height: auto;">
-</div>
+#### Evaluation for `Type`
+
+| Classification Report | Confusion Matrix |
+| :---: | :---: |
+| <img src="images/report_type.png" alt="Type Classification Report" width="450"> | <img src="images/confusion_matrix_type.png" alt="Type Confusion Matrix" width="450"> |
+
 
 * **Note**: Accuracy is 66%, but the model predicts `Bug` for most cases, ignoring minority classes.
 
-### 3. Evaluation for `Priority`
-<div style="display: flex; justify-content: space-between;">
-  <img src="images/report_priority.png" alt="Priority Classification Report" style="width: auto; max-width: 48%; height: auto;">
-  <img src="images/confusion_matrix_priority.png" alt="Priority Confusion Matrix" style="width: 48%; height: auto;">
-</div>
+#### Evaluation for `Priority`
 
-* **Note**: Accuracy is 58%, driven by over-predicting `Normal,` the majority class.
+| Classification Report | Confusion Matrix |
+| :---: | :---: |
+| <img src="images/report_priority.png" alt="Priority Classification Report" width="450"> | <img src="images/confusion_matrix_priority.png" alt="Priority Confusion Matrix" width="450"> |
 
 ---
+
+## 4. Conclusion & Future Work
+
+### Conclusion
+The results are not a reflection of poor model performance but an **accurate diagnosis of the dataset's core limitations**: extreme data scarcity and severe class imbalance. The key takeaway is that with the current data, even robust baseline models rationally default to the safest strategies. The primary bottleneck is the dataset itself.
+
+### Future Work
+1.  **Enrich the Dataset**: The most critical step is to **acquire more labeled data**.
+2.  **Advanced Imbalance Handling**: Implement techniques like setting `class_weight='balanced'` in the models or using sampling methods (ex: SMOTE).
+3.  **Richer Feature Representation**: Move beyond TF-IDF to contextual **word embeddings** (ex: Word2Vec) to capture semantic meaning.
+4.  **Experiment with Complex Models**: Once a sufficient amount of data is available, it would become feasible to experiment with more data-hungry models like **Gradient Boosting (XGBoost)** or a **Transformer (ex: DistilBERT)**.
