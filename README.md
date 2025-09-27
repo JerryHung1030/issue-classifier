@@ -2,9 +2,15 @@
 
 This repository contains the solution for the programming task.
 
-## Exploratory Data Analysis (EDA)
+## I. Exploratory Data Analysis (EDA)
 
-Before building any models, I performed a thorough exploratory analysis on the first 50 issues (the training set) to understand the data's structure, distributions, and content. This process ensures that all subsequent modeling decisions are data-driven.
+Before building any models, I performed a thorough exploratory analysis on the first 50 issues (the training set) to understand the data`s structure, distributions, and content. This process ensures that all subsequent modeling decisions are data-driven.
+
+* **Testing the EDA Notebook**: Launch Jupyter Notebook with:
+  ```bash
+  jupyter notebook
+  ```
+  Open `EDA.ipynb` and run the cells sequentially.
 
 ### 1. Data Snapshot
 
@@ -38,7 +44,7 @@ To understand the content itself, I generated word clouds. Comparing the overall
 
 ---
 
-## Model Selection
+## II. Model Selection
 
 To select the most suitable algorithm for this task, I evaluated three baseline models for text classification. This process was performed using 5-fold cross-validation on the training set to ensure the performance estimates are stable and reliable.
 
@@ -59,6 +65,11 @@ The models were evaluated on their mean accuracy across the 5 folds. The results
 | `Type`         | **0.600 (+/- 0.000)** | 0.600 (+/- 0.000)       | 0.600 (+/- 0.000)       |
 | `Priority`     | **0.760 (+/- 0.049)** | 0.760 (+/- 0.049)       | 0.760 (+/- 0.049)       |
 
+* **Run the Code**: Execute the script with: (Ensure that all dependencies are installed as listed in `requirements.txt`.)
+  ```bash
+  python3 predict_issues.py
+  ```
+
 ### 3. Analysis and Decision
 
 * **Note**: The evaluation triggered a `UserWarning` means that all three target variables have classes with only one member. This confirms the severe class imbalance discovered during the EDA and explains the challenges in achieving high accuracy.
@@ -71,3 +82,55 @@ The models were evaluated on their mean accuracy across the 5 folds. The results
     * **`project_name`**: **Linear SVC (SVM)**
     * **`Type`**: **Logistic Regression** (chosen for its simplicity as all models performed identically)
     * **`Priority`**: **Logistic Regression** (chosen for simplicity, while acknowledging its performance is baseline)
+
+---
+
+## III. Final Evaluation Against My Label
+
+After selecting the best-performing model for each target variable in the previous phase, the final step is to train these models on the entire training set and evaluate their performance on the unseen test set.
+
+To facilitate a quantitative evaluation, I first created a "gold standard" test set by manually labeling the 50 issues designated for prediction.
+
+> **Note on Manual Labels:** It is important to state that these labels are based on my own logical judgment after a short-term analysis of the issue text. While this provides a consistent benchmark for this project, it serves as a subjective ground truth, not an official one. The manually labeled data can be found at `data/manual_labels_dataset.json`.
+
+### Running the Final Prediction & Evaluation
+
+The main script `predict_issues.py` encapsulates the final workflow. When executed, it performs the following steps:
+
+1.  Trains the best models selected in Section II on the full 50-sample training dataset.
+2.  Predicts the labels for the subsequent 50 issues.
+3.  Saves the final, filled dataset as required by the task deliverables to `data/processed_dataset.json`.
+4.  Compares the predictions against the `data/manual_labels_dataset.json` file to generate the detailed evaluation reports and confusion matrices below.
+
+* **Run the Code**: Execute the script with: (Ensure that all dependencies are installed as listed in `requirements.txt`.)
+  ```bash
+  python3 predict_issues.py
+  ```
+
+### Evaluation Results
+
+### 1. Evaluation for `project_name`
+<div style="display: flex; justify-content: space-between;">
+  <img src="images/report_project_name.png" alt="Project Name Classification Report" style="width: auto; max-width: 48%; height: auto;">
+  <img src="images/confusion_matrix_project_name.png" alt="Project Name Confusion Matrix" style="width: 48%; height: auto;">
+</div>
+
+* **Note**: Accuracy is low (28%) due to class imbalance. The model over-predicts `Unidentified Roe,` the majority class.
+
+### 2. Evaluation for `Type`
+<div style="display: flex; justify-content: space-between;">
+  <img src="images/report_type.png" alt="Type Classification Report" style="width: auto; max-width: 48%; height: auto;">
+  <img src="images/confusion_matrix_type.png" alt="Type Confusion Matrix" style="width: 48%; height: auto;">
+</div>
+
+* **Note**: Accuracy is 66%, but the model predicts `Bug` for most cases, ignoring minority classes.
+
+### 3. Evaluation for `Priority`
+<div style="display: flex; justify-content: space-between;">
+  <img src="images/report_priority.png" alt="Priority Classification Report" style="width: auto; max-width: 48%; height: auto;">
+  <img src="images/confusion_matrix_priority.png" alt="Priority Confusion Matrix" style="width: 48%; height: auto;">
+</div>
+
+* **Note**: Accuracy is 58%, driven by over-predicting `Normal,` the majority class.
+
+---
